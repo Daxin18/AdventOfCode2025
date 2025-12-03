@@ -8,4 +8,9 @@ public static class Utils{
         string[] lines = System.IO.File.ReadAllLines(path);
         return lines;
     }
+
+    public static string[] TranslateCSV(string line){
+        var values = line.Split(',');
+        return values;
+    }
 }
