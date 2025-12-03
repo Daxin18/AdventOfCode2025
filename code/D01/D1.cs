@@ -11,19 +11,19 @@ public class D1 : IDay
     const int max_number = 99;
     int current_number = 50;
     int desired_number = 0;
+    int counter = 0;
+    bool count_all_zeros = true;
 
     List<int> rotations = new List<int>();
 
     public void Solve(){
-
-        int counter = 0;
-
         foreach(int rotation in rotations)
         {
             RotateSlow(rotation);
             if (current_number == desired_number)
             {
-                counter ++;
+                if(!count_all_zeros)
+                    counter ++;
             } 
         }
 
@@ -52,7 +52,11 @@ public class D1 : IDay
                 by -= 1;
                 current_number += 1;
                 if (current_number > max_number)
+                {
                     current_number = min_number;
+                    if (count_all_zeros)
+                        counter++;
+                }
             }
         }
         else
@@ -60,8 +64,14 @@ public class D1 : IDay
             while (by < 0){
                 by += 1;
                 current_number -= 1;
+                if (count_all_zeros && current_number == desired_number)
+                {
+                    counter ++;
+                }
                 if (current_number < min_number)
+                {
                     current_number = max_number;
+                }
             }
         }
     }
