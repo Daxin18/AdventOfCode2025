@@ -12,10 +12,30 @@ public class D4 : IDay
     int access_threshold = 4;
     const char _paper = '@';
     const char _empty = '.';
+    bool do_single_iteration = false;
 
     public void Solve(){
 
         var counter = 0;
+
+        counter = RemovePaperRecursive(0, do_single_iteration);
+
+        Console.WriteLine("Solution: " + counter);
+    }
+    
+    public void Init(){
+        string[] lines = Utils.ReadInput("D4.txt");
+        ClearGrid();
+        FillGrid(lines);
+    }
+
+    //NOTE: It's one-use only anyway, so I will modify property grid instead of passing a copy,
+    // it saves a bit of time and can be easily changed anyway if need be
+    private int RemovePaperRecursive(int total_removed, bool do_single_iteration)
+    {
+        var counter = 0;
+        //working grid will be used to keep the updated grid version (paper removed where possible) while still applying the logic to the existing grid
+        var working_grid = grid.Select(row => row.ToList()).ToList();
 
         for(int x = 0; x < grid.Count(); x++)
         {
@@ -26,18 +46,24 @@ public class D4 : IDay
                     if (CanBeAccessed(x,y))
                     {
                         counter++;
+                        working_grid[x][y] = false; //if a rall of paper can be removed - it is
                     }
                 }
             }
         }
 
-        Console.WriteLine("Solution: " + counter);
-    }
-    
-    public void Init(){
-        string[] lines = Utils.ReadInput("D4.txt");
-        ClearGrid();
-        FillGrid(lines);
+        if (do_single_iteration) //return instantly if only one iteration needs to be done (part 1)
+        {
+            return counter;
+        }
+
+        if (counter == 0) //return total if nothing changed
+        {
+            return total_removed;
+        }
+
+        grid = working_grid; //update the grid
+        return RemovePaperRecursive(total_removed + counter, false);
     }
 
     private void ClearGrid()
