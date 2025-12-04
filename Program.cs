@@ -6,7 +6,7 @@ class Program
     // dotnet run -- arg0 arg1 arg2 
     public static void Main(string[] args)
     {
-        string arg = args.Length > 0 ? args[0] : "default";
+        string arg = args.Length > 0 ? args[0] : "default (day 1)";
         IDay current_day = SetPuzzle(arg);
         Console.WriteLine("Solving puzzle for " + arg);
 
@@ -27,6 +27,9 @@ class Program
                 break;
             case "D3":
                 day = new D3();
+                break;
+            case "D4":
+                day = new D4();
                 break;
             //TODO: other days
             default:
