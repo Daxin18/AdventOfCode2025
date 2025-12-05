@@ -31,6 +31,9 @@ class Program
             case "D4":
                 day = new D4();
                 break;
+            case "D5":
+                day = new D5();
+                break;
             //TODO: other days
             default:
                 day = new D1();
