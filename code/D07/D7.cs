@@ -4,13 +4,13 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 
-
 public class D7 : IDay
 {
     List<string> data = new List<string>();
     List<List<char>> working_data = new List<List<char>>();
+    List<List<string>> p2_working_data = new List<List<string>>();
 
-    bool do_puzzle_2 = false;
+    bool do_puzzle_2 = true;
 
     private const char _start = 'S';
     private const char _split = '^';
@@ -18,19 +18,20 @@ public class D7 : IDay
     private const char _beam = '|';
 
     public void Solve(){
-        var counter = 0;
-
-        //NOTE: this gives me "game dev working on terrain generation" vibes
-        DrawBeams();
+        var counter = 0L;
 
         if (do_puzzle_2)
         {
+            DrawTimelineBeams();
 
+            //WriteP2DataToDebugFile();
+    
+            counter = CountTimelines();
         }
         else
         {
-            //starting in the first row in case S changes anything
-            //NOTE: I wrote it before writing any logic, might change later
+            //NOTE: this gives me "game dev working on terrain generation" vibes
+            DrawBeams();
             counter = CountSplits();
         }
 
@@ -46,6 +47,7 @@ public class D7 : IDay
         foreach (string line in data)
         {
             working_data.Add(line.ToList());
+            p2_working_data.Add(line.Select(c => c.ToString()).ToList());
         }
     }
 
@@ -53,6 +55,7 @@ public class D7 : IDay
     {
         data.Clear();
         working_data.Clear();
+        p2_working_data.Clear();
     }
 
     //used in a slow recursive solution
@@ -144,9 +147,9 @@ public class D7 : IDay
 
     //count each _split with a _beam above it
     // (there are less splitters than beams)
-    private int CountSplits()
+    private long CountSplits()
     {
-        var counter = 0;
+        var counter = 0L;
 
         for (int y = 1; y < working_data.Count() - 1; y++)
         {
@@ -163,5 +166,111 @@ public class D7 : IDay
         }
 
         return counter;
+    }
+
+    //instead of drawing _beam, this one "draws" numbers that correspond to the amount of timelines in the beam
+    // so the diagram looks like this:
+    /*
+
+    ......S......
+    ......1......
+    .....1^1.....
+    .....1.1.....
+    ....1^2^1....
+    ....1.2.1....
+    ...1^121^1...
+    ...1.121.1...
+    ..1^2^4^11...
+    ..1.2.4.11...
+
+
+    */
+    //replace _empty with TOTAL if:
+    // 1. there is a _start above (if not found already), replace with 1 (TOTAL = 1)
+    // 2. there is a NUMBER above, add NUMBER to TOTAL
+    // 3. there is a splitter on either left OR right with a NUMBER above the spliiter (add NUMBER to TOTAL)
+    //NOTE: this looks UGLY with the amount of tabs needed... but hopefully it functions well
+    private void DrawTimelineBeams()
+    {
+        //reduces the number of comparisons needed
+        bool start_not_found = true;
+
+        for (int y = 1; y < p2_working_data.Count(); y++) //start in the second row as the first one only contains an S
+        {
+            for (int x = 0; x < p2_working_data[0].Count(); x++)
+            {
+                //only changing status if we're on an empty field
+                if(p2_working_data[y][x] == _empty.ToString())
+                {
+                    // 1. there is a _start above (if not found already)
+                    if(start_not_found)
+                    {
+                        if(p2_working_data[y-1][x] == _start.ToString())
+                        {
+                            start_not_found = false;
+                            p2_working_data[y][x] = "1";
+                            break; // finding start means there are no more beams on this level, so we cut like 70 more comparisons
+                        }
+                        // if the start was not found, there are no beams, thus - there is no point if checking other conditions
+                        // yes, this could backfire...
+                        continue;
+                    }
+
+                    var total = 0L;
+
+                    // 2. there is a NUMBER above
+                    if (long.TryParse(p2_working_data[y-1][x], out var value))
+                    {
+                        total += value;
+                    }
+                    // 3.1.there is a splitter on right with a NUMBER above the spliiter
+                    if (
+                        x < p2_working_data[0].Count() - 1 
+                        && p2_working_data[y][x+1] == _split.ToString()
+                        && long.TryParse(p2_working_data[y-1][x+1], out var valueR)
+                    ){
+                        total += valueR;
+                    }
+                    // 3.2. there is a splitter on left with a NUMBER above the spliiter
+                    if (
+                        x > 0 
+                        && p2_working_data[y][x-1] == _split.ToString()
+                        && long.TryParse(p2_working_data[y-1][x-1], out var valueL)
+                    ){
+                        total += valueL;
+                    }
+                    
+                    p2_working_data[y][x] = total.ToString();
+                }
+            }
+        }
+    }
+
+    //just count the values of last beams
+    private long CountTimelines()
+    {
+        var counter = 0L;
+        
+        foreach(string s in p2_working_data.Last())
+        {
+            if(long.TryParse(s, out var value))
+            {
+                counter += value;
+            }
+        }
+
+        return counter;
+    }
+
+    private void WriteP2DataToDebugFile(){
+
+        var path = Path.Combine("inputs", "debug7.txt");
+        File.Delete(path); //ensure file is empty (aka delete before writing)
+        
+        using (StreamWriter outputFile = new StreamWriter(path))
+        {
+            foreach (var line in p2_working_data)
+                outputFile.WriteLine(string.Join("", line));
+        }
     }
 }
