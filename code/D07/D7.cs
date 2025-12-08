@@ -240,7 +240,10 @@ public class D7 : IDay
                         total += valueL;
                     }
                     
-                    p2_working_data[y][x] = total.ToString();
+                    if(total > 0)
+                    {
+                        p2_working_data[y][x] = total.ToString();
+                    }
                 }
             }
         }
