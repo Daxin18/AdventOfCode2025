@@ -14,7 +14,7 @@ public class D8 : IDay
     //map of all created connections for each junction box
     List<List<JunctionBox>> circuits = new List<List<JunctionBox>>();
 
-    bool do_puzzle_2 = false;
+    bool do_puzzle_2 = true;
     bool do_debug = false;
 
     public void Solve(){
@@ -28,7 +28,7 @@ public class D8 : IDay
         }
         else if(do_puzzle_2)
         {
-
+            counter = SolveP2();
         }
         else
         {
@@ -73,6 +73,64 @@ public class D8 : IDay
         junction_boxes.Clear();
         connections.Clear();
         circuits.Clear();
+    }
+
+    private long SolveP2()
+    {
+        // order connections be the distance to get the shortest ones first
+        connections = connections.OrderBy(x => x.Distance).ToList();
+        BoxConnection? last_conneciton = null;
+        
+        WriteToDebugFile();
+
+        //iterate as long as possible, broken when there is only one circuit
+        // 1. check if connection is part of the circuit
+        //      1.1 yes - add it to the circuit 
+        //      1.2 no - create a new circuit
+        for(int i = 0; i < connections.Count(); i++)
+        {
+            var conn = connections[i]; //get the shortest connection (as previous ones were already done)
+
+            if(IsPartOfCircuit(conn, out var circuit))
+            {
+                if(AddConnectionToCircuit(conn, circuit))
+                {
+                    //NOPE
+                }
+            }
+            else
+            {
+                var new_circuit = new List<JunctionBox>();
+                AddConnectionToCircuit(conn, new_circuit);
+                circuits.Add(new_circuit);
+            }
+
+            FixInterCircuitConnection();
+
+            if (CheckExitCondition())
+            {
+                last_conneciton = conn;
+                break;
+            }
+
+        }
+
+        //SORT
+        circuits = circuits.OrderByDescending(x => x.Count()).ToList();
+
+        foreach (var circuit in circuits)
+        {
+            //Console.WriteLine(String.Join("; ", circuit));
+            //Console.WriteLine(circuit.Count());
+        }
+        
+        return (long)last_conneciton!.From.X * (long)last_conneciton!.To.X;
+    }
+
+    private bool CheckExitCondition()
+    {
+        var biggest = circuits.OrderByDescending(x => x.Count()).First().Count();
+        return biggest == junction_boxes.Count();
     }
 
     private long SolveP1(int connections_limit)
